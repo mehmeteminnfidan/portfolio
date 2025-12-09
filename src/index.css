@@ -115,3 +115,7 @@ code {
         border-bottom-color: inherit;
     }
 }
+body {
+  background: radial-gradient(circle at 20% 20%, #1e1e2f, #0d0d16)
+  background-attachment: fixed;
+}
