@@ -1,36 +1,74 @@
-import React, { useState } from 'react';
-import { Button } from './ui/button';
-import { Input } from './ui/input';
-import { Textarea } from './ui/textarea';
-import { Card, CardContent } from './ui/card';
-import { Mail, MapPin, Phone } from 'lucide-react';
-import { personalInfo } from '../mock';
-import { toast } from '../hooks/use-toast';
+import React, { useState } from "react";
+import { supabase } from "../lib/supabaseClient";
+import { Button } from "./ui/button";
+import { Input } from "./ui/input";
+import { Textarea } from "./ui/textarea";
+import { Card, CardContent } from "./ui/card";
+import { Mail, MapPin, Phone } from "lucide-react";
+import { personalInfo } from "../mock";
+import { toast } from "../hooks/use-toast";
 
 const Contact = () => {
   const [formData, setFormData] = useState({
-    name: '',
-    email: '',
-    subject: '',
-    message: ''
+    name: "",
+    email: "",
+    subject: "",
+    message: "",
   });
-
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    // Mock submission - will be replaced with actual API call
-    console.log('Form submitted:', formData);
-    toast({
-      title: "Mesaj gönderildi!",
-      description: "En kısa sürede sizinle iletişime geçeceğim.",
-    });
-    setFormData({ name: '', email: '', subject: '', message: '' });
-  };
+  const [loading, setLoading] = useState(false);
 
   const handleChange = (e) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value
-    });
+    setFormData((prev) => ({
+      ...prev,
+      [e.target.name]: e.target.value,
+    }));
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+
+    try {
+      console.log("Form submitted (frontend):", formData);
+
+      const { data, error } = await supabase
+        .from("messages") // Supabase'deki tablonun adı
+        .insert([
+          {
+            name: formData.name,
+            email: formData.email,
+            subject: formData.subject,
+            message: formData.message,
+          },
+        ]);
+
+      console.log("Supabase yanıtı:", { data, error });
+
+      if (error) {
+        throw error;
+      }
+
+      toast({
+        title: "Mesaj gönderildi!",
+        description: "Mesajınız başarıyla iletildi.",
+      });
+
+      setFormData({
+        name: "",
+        email: "",
+        subject: "",
+        message: "",
+      });
+    } catch (error) {
+      console.error("Gönderim hatası:", error);
+      toast({
+        title: "Bir hata oluştu",
+        description: "Mesaj gönderilemedi.",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -54,8 +92,10 @@ const Contact = () => {
                       <Mail size={24} className="text-gray-900" />
                     </div>
                     <div>
-                      <h3 className="font-semibold text-gray-900 mb-2">Email</h3>
-                      <a 
+                      <h3 className="font-semibold text-gray-900 mb-2">
+                        Email
+                      </h3>
+                      <a
                         href={`mailto:${personalInfo.email}`}
                         className="text-gray-600 hover:text-gray-900 transition-colors"
                       >
@@ -73,8 +113,10 @@ const Contact = () => {
                       <Phone size={24} className="text-gray-900" />
                     </div>
                     <div>
-                      <h3 className="font-semibold text-gray-900 mb-2">Telefon</h3>
-                      <a 
+                      <h3 className="font-semibold text-gray-900 mb-2">
+                        Telefon
+                      </h3>
+                      <a
                         href={`tel:${personalInfo.phone}`}
                         className="text-gray-600 hover:text-gray-900 transition-colors"
                       >
@@ -92,7 +134,9 @@ const Contact = () => {
                       <MapPin size={24} className="text-gray-900" />
                     </div>
                     <div>
-                      <h3 className="font-semibold text-gray-900 mb-2">Konum</h3>
+                      <h3 className="font-semibold text-gray-900 mb-2">
+                        Konum
+                      </h3>
                       <p className="text-gray-600">{personalInfo.location}</p>
                     </div>
                   </div>
@@ -165,9 +209,10 @@ const Contact = () => {
                     </div>
                     <Button
                       type="submit"
+                      disabled={loading}
                       className="w-full bg-gray-900 hover:bg-gray-800 text-white py-6 text-base font-medium transition-all duration-300 transform hover:scale-105"
                     >
-                      Mesaj Gönder
+                      {loading ? "Gönderiliyor..." : "Mesaj Gönder"}
                     </Button>
                   </form>
                 </CardContent>
